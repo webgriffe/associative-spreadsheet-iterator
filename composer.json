@@ -1,0 +1,19 @@
+{
+    "name": "webgriffe/associative-csv-iterator",
+    "require": {
+        "keboola/csv": "@stable"
+    },
+    "require-dev": {
+        "mikey179/vfsStream": "@stable"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Webgriffe SRL",
+            "email": "info@webgriffe.com"
+        }
+    ],
+    "autoload": {
+        "psr-0": { "Webgriffe\\AssociativeCsvIterator": "src/" }
+    }
+}
