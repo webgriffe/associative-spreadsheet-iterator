@@ -20,7 +20,7 @@ CSV;
 
         $filePath = $this->setupCsvFileAndGetPath($csvContent);
 
-        $csvIterator = new CsvIterator(array($filePath, ';'));
+        $csvIterator = new CsvIterator($filePath, ';');
         $result = array();
         foreach ($csvIterator as $row) {
             $result[] = $row;

@@ -25,26 +25,6 @@ class CsvIterator implements \Iterator
         $enclosure = CsvFile::DEFAULT_ENCLOSURE,
         $escapedBy = ""
     ) {
-        //Bisogna gestire il caso in cui il costruttore venga chiamato dalla getModelInstance di Magento, che passa
-        //solo un array come parametro
-        if (is_array($fileName)) {
-            $array = $fileName;
-            unset($fileName);
-            if (!array_key_exists(0, $array)) {
-                throw new \InvalidArgumentException("At least the file name must be supplied");
-            }
-            $fileName = $array[0];
-            if (array_key_exists(1, $array)) {
-                $delimiter = $array[1];
-            }
-            if (array_key_exists(2, $array)) {
-                $enclosure = $array[2];
-            }
-            if (array_key_exists(3, $array)) {
-                $escapedBy = $array[3];
-            }
-        }
-
         $this->csvFile = new CsvFile($fileName, $delimiter, $enclosure, $escapedBy);
         $this->header = $this->csvFile->getHeader();
         $this->csvFile->next();
