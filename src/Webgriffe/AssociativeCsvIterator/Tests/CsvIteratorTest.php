@@ -3,12 +3,11 @@
  * @author Manuele Menozzi <mmenozzi@webgriffe.com>
  */
 
-namespace Webgriffe\AssociativeCsvIterator\Test;
+namespace Webgriffe\AssociativeCsvIterator\Tests;
 
-use org\bovigo\vfs\vfsStream;
 use Webgriffe\AssociativeCsvIterator\CsvIterator;
 
-class CsvIteratorTest extends \PHPUnit_Framework_TestCase
+class CsvIteratorTest extends IteratorTestCase
 {
     public function testIterateShouldReturnProperArray()
     {
@@ -18,7 +17,7 @@ class CsvIteratorTest extends \PHPUnit_Framework_TestCase
 "1234568";"simple";"Default";"base";"My Simple Product 2";0.79;1;500
 CSV;
 
-        $filePath = $this->setupCsvFileAndGetPath($csvContent);
+        $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
 
         $csvIterator = new CsvIterator($filePath, ';');
         $result = array();
@@ -59,7 +58,7 @@ CSV;
 "column1","column2","column3"
 "there are","fewer columns than header"
 CSV;
-        $filePath = $this->setupCsvFileAndGetPath($csvContent);
+        $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
 
         $csvIterator = new CsvIterator($filePath);
 
@@ -76,7 +75,7 @@ CSV;
 "column1","column2"
 "there are","multiple|values"
 CSV;
-        $filePath = $this->setupCsvFileAndGetPath($csvContent);
+        $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
         $csvIterator = new CsvIterator($filePath);
 
         $result = array();
@@ -101,7 +100,7 @@ CSV;
 "column1","column2"
 CSV;
 
-        $filePath = $this->setupCsvFileAndGetPath($csvContent);
+        $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
         $csvIterator = new CsvIterator($filePath);
 
         $this->assertFalse($csvIterator->valid());
@@ -116,7 +115,7 @@ CSV;
 
     public function testEmptyFile()
     {
-        $filePath = $this->setupCsvFileAndGetPath('');
+        $filePath = $this->setUpVirtualFileAndGetPath('');
         $csvIterator = new CsvIterator($filePath);
 
         $this->assertFalse($csvIterator->valid());
@@ -127,21 +126,5 @@ CSV;
         }
 
         $this->assertEquals(array(), $result);
-    }
-
-    /**
-     * @param $csvContent
-     * @return string
-     */
-    private function setupCsvFileAndGetPath($csvContent)
-    {
-        $structure = array(
-            'directory' => array(
-                'my_file.csv' => $csvContent,
-            ),
-        );
-        vfsStream::setup();
-        vfsStream::create($structure);
-        return vfsStream::url('root/directory/my_file.csv');
     }
 }
