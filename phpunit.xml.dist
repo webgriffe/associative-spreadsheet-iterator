@@ -14,7 +14,7 @@
          bootstrap="./vendor/autoload.php">
     <testsuites>
         <testsuite name="AssociativeCsvIterator">
-            <directory>./</directory>
+            <directory>./src/</directory>
         </testsuite>
     </testsuites>
 </phpunit>

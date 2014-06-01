@@ -3,9 +3,9 @@
  * @author Manuele Menozzi <mmenozzi@webgriffe.com>
  */
 
-namespace Webgriffe\AssociativeCsvIterator\Tests;
+namespace Webgriffe\AssociativeSpreadsheetIterator\Tests;
 
-use Webgriffe\AssociativeCsvIterator\CsvIterator;
+use Webgriffe\AssociativeSpreadsheetIterator\Iterator;
 
 class CsvIteratorTest extends IteratorTestCase
 {
@@ -19,7 +19,7 @@ CSV;
 
         $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
 
-        $csvIterator = new CsvIterator($filePath, ';');
+        $csvIterator = new Iterator($filePath, ';');
         $result = array();
         foreach ($csvIterator as $row) {
             $result[] = $row;
@@ -59,7 +59,7 @@ CSV;
 "there are","fewer columns than header"
 CSV;
         $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
-        $worksheetIterator = new CsvIterator($filePath);
+        $worksheetIterator = new Iterator($filePath);
         $this->assertDifferentHeaderAndValuesColumnCountIteratorFails($worksheetIterator);
     }
 
@@ -70,7 +70,7 @@ CSV;
 "there are","multiple|values"
 CSV;
         $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
-        $csvIterator = new CsvIterator($filePath);
+        $csvIterator = new Iterator($filePath);
 
         $result = array();
         foreach ($csvIterator as $row) {
@@ -94,14 +94,14 @@ CSV;
 "column1","column2"
 CSV;
         $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
-        $onlyHeadingIterator = new CsvIterator($filePath);
+        $onlyHeadingIterator = new Iterator($filePath);
         $this->assertOnlyHeadingIteratorIteratesOnEmptyArray($onlyHeadingIterator);
     }
 
     public function testEmptyFile()
     {
         $filePath = $this->setUpVirtualFileAndGetPath('');
-        $emptyIterator = new CsvIterator($filePath);
+        $emptyIterator = new Iterator($filePath);
         $this->assertEmptyIteratorIsNotValidAndIteratesOnEmptyArray($emptyIterator);
     }
 }

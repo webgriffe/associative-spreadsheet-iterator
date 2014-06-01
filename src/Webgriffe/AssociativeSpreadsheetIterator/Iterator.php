@@ -3,31 +3,36 @@
  * @author Manuele Menozzi <mmenozzi@webgriffe.com>
  */
 
-namespace Webgriffe\AssociativeCsvIterator;
+namespace Webgriffe\AssociativeSpreadsheetIterator;
 
-use \Keboola\Csv\CsvFile;
 
-class CsvIterator implements \Iterator
+class Iterator implements \Iterator
 {
     /**
-     * @var CsvFile
+     * @var \PHPExcel_Worksheet_RowIterator
      */
-    protected $csvFile;
+    protected $rowIterator;
 
     /**
      * @var array
      */
     protected $header;
 
-    public function __construct(
-        $fileName,
-        $delimiter = CsvFile::DEFAULT_DELIMITER,
-        $enclosure = CsvFile::DEFAULT_ENCLOSURE,
-        $escapedBy = ""
-    ) {
-        $this->csvFile = new CsvFile($fileName, $delimiter, $enclosure, $escapedBy);
-        $this->header = $this->csvFile->getHeader();
-        $this->csvFile->next();
+    public function __construct($fileName, $csvDelimiter = null, $csvEnclosure = null) {
+        $reader = \PHPExcel_IOFactory::createReaderForFile($fileName);
+        if ($reader instanceof \PHPExcel_Reader_CSV) {
+            if ($csvDelimiter) {
+                $reader->setDelimiter($csvDelimiter);
+            }
+            if ($csvEnclosure) {
+                $reader->setEnclosure($csvEnclosure);
+            }
+        }
+        $phpExcel = $reader->load($fileName);
+        $this->rowIterator = $phpExcel->getSheet(0)->getRowIterator();
+        $this->rowIterator->rewind();
+        $this->header = iterator_to_array($this->rowIterator->current()->getCellIterator());
+        $this->rowIterator->next();
     }
 
     /**
@@ -43,7 +48,13 @@ class CsvIterator implements \Iterator
             throw new \LogicException('Cannot fetch CSV row, header is not set.');
         }
 
-        $currentLine = $this->csvFile->current();
+        $currentLine = iterator_to_array($this->rowIterator->current()->getCellIterator());
+        $currentLine = array_map(
+            function (\PHPExcel_Cell $cell) {
+                return $cell->getValue();
+            },
+            $currentLine
+        );
         if (count($currentLine) != count($this->header)) {
             throw new \LogicException(
                 sprintf(
@@ -66,7 +77,7 @@ class CsvIterator implements \Iterator
      */
     public function next()
     {
-        $this->csvFile->next();
+        $this->rowIterator->next();
     }
 
     /**
@@ -77,7 +88,7 @@ class CsvIterator implements \Iterator
      */
     public function key()
     {
-        return $this->csvFile->key();
+        return $this->rowIterator->key();
     }
 
     /**
@@ -89,7 +100,7 @@ class CsvIterator implements \Iterator
      */
     public function valid()
     {
-        return $this->csvFile->valid();
+        return $this->rowIterator->valid();
     }
 
     /**
@@ -100,8 +111,8 @@ class CsvIterator implements \Iterator
      */
     public function rewind()
     {
-        $this->csvFile->rewind();
-        $this->csvFile->next();
+        $this->rowIterator->rewind();
+        $this->rowIterator->next();
     }
 
     /**

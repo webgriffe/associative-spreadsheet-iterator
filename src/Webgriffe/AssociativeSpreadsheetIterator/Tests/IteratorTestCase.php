@@ -3,11 +3,10 @@
  * @author Manuele Menozzi <mmenozzi@webgriffe.com>
  */
 
-namespace Webgriffe\AssociativeCsvIterator\Tests;
-
+namespace Webgriffe\AssociativeSpreadsheetIterator\Tests;
 
 use org\bovigo\vfs\vfsStream;
-use Webgriffe\AssociativeCsvIterator\CsvIterator;
+use Webgriffe\AssociativeSpreadsheetIterator\Iterator;
 
 class IteratorTestCase extends \PHPUnit_Framework_TestCase
 {
@@ -27,7 +26,7 @@ class IteratorTestCase extends \PHPUnit_Framework_TestCase
         return vfsStream::url('root/directory/my_file.csv');
     }
 
-    protected function assertDifferentHeaderAndValuesColumnCountIteratorFails(CsvIterator $differentColumnCountIterator)
+    protected function assertDifferentHeaderAndValuesColumnCountIteratorFails(Iterator $differentColumnCountIterator)
     {
         $this->setExpectedException('\LogicException', 'Cannot fetch CSV row, header columns count do not match.');
 
@@ -36,7 +35,7 @@ class IteratorTestCase extends \PHPUnit_Framework_TestCase
         $differentColumnCountIterator->current();
     }
 
-    protected function assertOnlyHeadingIteratorIteratesOnEmptyArray(CsvIterator $onlyHeadingIterator)
+    protected function assertOnlyHeadingIteratorIteratesOnEmptyArray(Iterator $onlyHeadingIterator)
     {
         $this->assertFalse($onlyHeadingIterator->valid());
 
@@ -48,7 +47,7 @@ class IteratorTestCase extends \PHPUnit_Framework_TestCase
         $this->assertEquals(array(), $result);
     }
 
-    protected function assertEmptyIteratorIsNotValidAndIteratesOnEmptyArray(CsvIterator $emptyIterator)
+    protected function assertEmptyIteratorIsNotValidAndIteratesOnEmptyArray(Iterator $emptyIterator)
     {
         $this->assertFalse($emptyIterator->valid());
 
