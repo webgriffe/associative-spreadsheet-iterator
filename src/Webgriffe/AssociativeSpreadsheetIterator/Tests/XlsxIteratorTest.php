@@ -47,11 +47,25 @@ class XlsxIteratorTest extends IteratorTestCase
         );
     }
 
-    public function testIterateShouldFailDueToHeaderAndValuesDifferentColumnCount()
+    public function testIterateShouldNotFailDueToHeaderAndValuesDifferentColumnCount()
     {
         $filePath = __DIR__ . '/Fixtures/test-different-column-count.xlsx';
         $worksheetIterator = new Iterator($filePath);
-        $this->assertDifferentHeaderAndValuesColumnCountIteratorFails($worksheetIterator);
+
+        $result = array();
+        foreach ($worksheetIterator as $row) {
+            $result[] = $row;
+        }
+        $this->assertEquals(
+            array(
+                array(
+                    'column1' => 'there are',
+                    'column2' => 'fewer columns than header',
+                    'column3' => null,
+                ),
+            ),
+            $result
+        );
     }
 
     public function testFileWithOnlyHeading()

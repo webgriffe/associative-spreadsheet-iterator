@@ -26,15 +26,6 @@ class IteratorTestCase extends \PHPUnit_Framework_TestCase
         return vfsStream::url('root/directory/my_file.csv');
     }
 
-    protected function assertDifferentHeaderAndValuesColumnCountIteratorFails(Iterator $differentColumnCountIterator)
-    {
-        $this->setExpectedException('\LogicException', 'Cannot fetch CSV row, header columns count do not match.');
-
-        $differentColumnCountIterator->rewind();
-        $differentColumnCountIterator->valid();
-        $differentColumnCountIterator->current();
-    }
-
     protected function assertOnlyHeadingIteratorIteratesOnEmptyArray(Iterator $onlyHeadingIterator)
     {
         $this->assertFalse($onlyHeadingIterator->valid());

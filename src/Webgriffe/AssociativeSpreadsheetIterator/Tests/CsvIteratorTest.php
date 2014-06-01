@@ -52,7 +52,7 @@ CSV;
         );
     }
 
-    public function testIterateShouldFailDueToHeaderAndValuesDifferentColumnCount()
+    public function testIterateShouldNotFailDueToHeaderAndValuesDifferentColumnCount()
     {
         $csvContent = <<<CSV
 "column1","column2","column3"
@@ -60,7 +60,21 @@ CSV;
 CSV;
         $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
         $worksheetIterator = new Iterator($filePath);
-        $this->assertDifferentHeaderAndValuesColumnCountIteratorFails($worksheetIterator);
+
+        $result = array();
+        foreach ($worksheetIterator as $row) {
+            $result[] = $row;
+        }
+        $this->assertEquals(
+            array(
+                array(
+                    'column1' => 'there are',
+                    'column2' => 'fewer columns than header',
+                    'column3' => null,
+                ),
+            ),
+            $result
+        );
     }
 
     public function testFileWithOnlyHeading()

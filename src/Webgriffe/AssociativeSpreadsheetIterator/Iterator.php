@@ -18,6 +18,11 @@ class Iterator implements \Iterator
      */
     protected $header;
 
+    /**
+     * @var int
+     */
+    protected $highestDataColumn;
+
     public function __construct($fileName, $csvDelimiter = null, $csvEnclosure = null) {
         $reader = \PHPExcel_IOFactory::createReaderForFile($fileName);
         if ($reader instanceof \PHPExcel_Reader_CSV) {
@@ -29,9 +34,11 @@ class Iterator implements \Iterator
             }
         }
         $phpExcel = $reader->load($fileName);
-        $this->rowIterator = $phpExcel->getSheet(0)->getRowIterator();
+        $worksheet = $phpExcel->getSheet(0);
+        $this->highestDataColumn = \PHPExcel_Cell::columnIndexFromString($worksheet->getHighestDataColumn());
+        $this->rowIterator = $worksheet->getRowIterator();
         $this->rowIterator->rewind();
-        $this->header = iterator_to_array($this->rowIterator->current()->getCellIterator());
+        $this->header = $this->convertCellIteratorToFilteredArray($this->rowIterator->current()->getCellIterator());
         $this->rowIterator->next();
     }
 
@@ -48,13 +55,7 @@ class Iterator implements \Iterator
             throw new \LogicException('Cannot fetch CSV row, header is not set.');
         }
 
-        $currentLine = iterator_to_array($this->rowIterator->current()->getCellIterator());
-        $currentLine = array_map(
-            function (\PHPExcel_Cell $cell) {
-                return $cell->getValue();
-            },
-            $currentLine
-        );
+        $currentLine = $this->convertCellIteratorToFilteredArray($this->rowIterator->current()->getCellIterator());
         if (count($currentLine) != count($this->header)) {
             throw new \LogicException(
                 sprintf(
@@ -123,5 +124,24 @@ class Iterator implements \Iterator
                 $cell = explode('|', $cell);
             }
         }
+    }
+
+    /**
+     * @param \PHPExcel_Worksheet_CellIterator $cellIterator
+     * @return array
+     */
+    private function convertCellIteratorToFilteredArray(\PHPExcel_Worksheet_CellIterator $cellIterator)
+    {
+        $cellIterator->setIterateOnlyExistingCells(false);
+        $array = iterator_to_array($cellIterator);
+        $array = array_map(
+            function ($cell) {
+                /** @var \PHPExcel_Cell $cell */
+                return $cell->getValue();
+            },
+            $array
+        );
+        $array = array_slice($array, 0, $this->highestDataColumn);
+        return $array;
     }
 }
