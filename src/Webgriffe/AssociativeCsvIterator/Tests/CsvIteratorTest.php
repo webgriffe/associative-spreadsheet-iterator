@@ -59,14 +59,8 @@ CSV;
 "there are","fewer columns than header"
 CSV;
         $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
-
-        $csvIterator = new CsvIterator($filePath);
-
-        $this->setExpectedException('\LogicException', 'Cannot fetch CSV row, header columns count do not match.');
-
-        $csvIterator->rewind();
-        $csvIterator->valid();
-        $csvIterator->current();
+        $worksheetIterator = new CsvIterator($filePath);
+        $this->assertDifferentHeaderAndValuesColumnCountIteratorFails($worksheetIterator);
     }
 
     public function testIterateShouldProcessMultipleValuesCell()
@@ -99,32 +93,15 @@ CSV;
         $csvContent = <<<CSV
 "column1","column2"
 CSV;
-
         $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
-        $csvIterator = new CsvIterator($filePath);
-
-        $this->assertFalse($csvIterator->valid());
-
-        $result = array();
-        foreach ($csvIterator as $row) {
-            $result[] = $row;
-        }
-
-        $this->assertEquals(array(), $result);
+        $onlyHeadingIterator = new CsvIterator($filePath);
+        $this->assertOnlyHeadingIteratorIteratesOnEmptyArray($onlyHeadingIterator);
     }
 
     public function testEmptyFile()
     {
         $filePath = $this->setUpVirtualFileAndGetPath('');
-        $csvIterator = new CsvIterator($filePath);
-
-        $this->assertFalse($csvIterator->valid());
-
-        $result = array();
-        foreach ($csvIterator as $row) {
-            $result[] = $row;
-        }
-
-        $this->assertEquals(array(), $result);
+        $emptyIterator = new CsvIterator($filePath);
+        $this->assertEmptyIteratorIsNotValidAndIteratesOnEmptyArray($emptyIterator);
     }
 }
