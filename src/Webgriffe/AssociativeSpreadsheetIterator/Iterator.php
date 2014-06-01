@@ -115,18 +115,6 @@ class Iterator implements \Iterator
     }
 
     /**
-     * @param $currentLine array
-     */
-    private function processMultipleValues(&$currentLine)
-    {
-        foreach ($currentLine as &$cell) {
-            if (strpos($cell, '|') !== false) {
-                $cell = explode('|', $cell);
-            }
-        }
-    }
-
-    /**
      * @param \PHPExcel_Worksheet_CellIterator $cellIterator
      * @return array
      */
