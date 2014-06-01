@@ -64,8 +64,6 @@ class Iterator implements \Iterator
             );
         }
 
-        $this->processMultipleValues($currentLine);
-
         return array_combine($this->header, $currentLine);
     }
 

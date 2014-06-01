@@ -63,31 +63,6 @@ CSV;
         $this->assertDifferentHeaderAndValuesColumnCountIteratorFails($worksheetIterator);
     }
 
-    public function testIterateShouldProcessMultipleValuesCell()
-    {
-        $csvContent = <<<CSV
-"column1","column2"
-"there are","multiple|values"
-CSV;
-        $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
-        $csvIterator = new Iterator($filePath);
-
-        $result = array();
-        foreach ($csvIterator as $row) {
-            $result[] = $row;
-        }
-
-        $this->assertEquals(
-            array(
-                array(
-                    'column1' => 'there are',
-                    'column2' => array('multiple', 'values'),
-                )
-            ),
-            $result
-        );
-    }
-
     public function testFileWithOnlyHeading()
     {
         $csvContent = <<<CSV
