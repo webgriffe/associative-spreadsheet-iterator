@@ -5,8 +5,7 @@
 
 namespace Webgriffe\AssociativeSpreadsheetIterator;
 
-
-class Iterator implements \Iterator
+class Iterator implements \SeekableIterator
 {
     /**
      * @var \PHPExcel_Worksheet_RowIterator
@@ -110,7 +109,7 @@ class Iterator implements \Iterator
      */
     public function key()
     {
-        return $this->rowIterator->key();
+        return $this->rowIterator->key() - 1;
     }
 
     /**
@@ -137,6 +136,27 @@ class Iterator implements \Iterator
 
         $this->rowIterator->rewind();
         $this->rowIterator->next();
+    }
+
+    /**
+     * (PHP 5 &gt;= 5.1.0)<br/>
+     * Seeks to a position
+     * @link http://php.net/manual/en/seekableiterator.seek.php
+     * @param int $position <p>
+     * The position to seek to.
+     * </p>
+     * @return void
+     */
+    public function seek($position)
+    {
+        $innerPosition = $position + 1;
+        if ($innerPosition < $this->filter->getCurrentStartRow() ||
+            $innerPosition >= $this->filter->getCurrentEndRow()
+        ) {
+            $this->reloadIterator($innerPosition);
+        } else {
+            $this->rowIterator->seek($innerPosition);
+        }
     }
 
     /**

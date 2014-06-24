@@ -122,10 +122,57 @@ CSV;
             while ($csvIterator->valid()) {
                 ++$count;
                 $this->assertEquals(array('col1' => "val1-$count", 'col2' => "val2-$count"), $csvIterator->current());
+                $this->assertEquals($count, $csvIterator->key());
                 $csvIterator->next();
             }
             $this->assertEquals($rowNumber, $count);
         }
+    }
+
+    public function seekChunkChangeDataProvider()
+    {
+        return array(
+            array(1),
+            array(42),
+            array(98),
+            array(99),
+            array(100),
+            array(101),
+            array(102),
+            array(198),
+            array(199),
+            array(200),
+            array(201),
+            array(202, false),
+        );
+    }
+
+    /**
+     * @dataProvider seekChunkChangeDataProvider
+     */
+    public function testSeekChunkChange($jumpTo, $moreValidElements = true)
+    {
+        $csvContent = $this->getContent(202);
+        $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
+        $csvIterator = new Iterator($filePath, ';');
+
+        $csvIterator->rewind();
+
+        $csvIterator->seek($jumpTo);
+        $this->assertEquals(array('col1' => "val1-$jumpTo", 'col2' => "val2-$jumpTo"), $csvIterator->current());
+        $this->assertEquals($jumpTo, $csvIterator->key());
+        $csvIterator->next();
+        if ($moreValidElements) {
+            $next = $jumpTo+1;
+            $this->assertEquals(array('col1' => "val1-$next", 'col2' => "val2-$next"), $csvIterator->current());
+            $this->assertEquals($next, $csvIterator->key());
+            return;
+        }
+
+        $this->assertFalse($csvIterator->valid());
+        $csvIterator->rewind();
+        $this->assertEquals(array('col1' => "val1-1", 'col2' => "val2-1"), $csvIterator->current());
+        $this->assertEquals(1, $csvIterator->key());
     }
 
     /**
