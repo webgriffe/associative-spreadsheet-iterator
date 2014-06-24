@@ -93,4 +93,54 @@ CSV;
         $emptyIterator = new Iterator($filePath);
         $this->assertEmptyIteratorIsNotValidAndIteratesOnEmptyArray($emptyIterator);
     }
+
+    public function chunkChangeDataProvider()
+    {
+        return array(
+            array(98),
+            array(99),
+            array(100),
+            array(101),
+            array(102),
+            array(202),
+        );
+    }
+
+    /**
+     * @dataProvider chunkChangeDataProvider
+     */
+    public function testChunkChange($rowNumber)
+    {
+        $csvContent = $this->getContent($rowNumber);
+        $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
+        $csvIterator = new Iterator($filePath, ';');
+
+        //Eseguilo due volte per testare che anche il reset funzioni correttamente
+        for ($i = 0; $i < 2; ++$i) {
+            $count = 0;
+            $csvIterator->rewind();
+            while ($csvIterator->valid()) {
+                ++$count;
+                $this->assertEquals(array('col1' => "val1-$count", 'col2' => "val2-$count"), $csvIterator->current());
+                $csvIterator->next();
+            }
+            $this->assertEquals($rowNumber, $count);
+        }
+    }
+
+    /**
+     * @param $rowNumber
+     * @return string
+     */
+    private function getContent($rowNumber)
+    {
+        $csvContent = <<<CSV
+"col1";"col2"
+CSV;
+
+        for ($i = 1; $i <= $rowNumber; ++$i) {
+            $csvContent .= "\nval1-$i;val2-$i";
+        }
+        return $csvContent;
+    }
 }

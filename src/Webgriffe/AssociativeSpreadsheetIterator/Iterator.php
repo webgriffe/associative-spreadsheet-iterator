@@ -23,20 +23,38 @@ class Iterator implements \Iterator
      */
     protected $highestDataColumn;
 
-    public function __construct($fileName, $csvDelimiter = null, $csvEnclosure = null) {
-        $reader = \PHPExcel_IOFactory::createReaderForFile($fileName);
-        if ($reader instanceof \PHPExcel_Reader_CSV) {
+    /**
+     * @var ChunkReadFilter
+     */
+    protected $filter;
+
+    /**
+     * @var \PHPExcel_Reader_IReader
+     */
+    protected $reader;
+
+    /**
+     * @var string
+     */
+    protected $filename;
+
+    public function __construct($fileName, $csvDelimiter = null, $csvEnclosure = null)
+    {
+        $this->filename = $fileName;
+        $this->filter = new ChunkReadFilter();
+
+        $this->reader = \PHPExcel_IOFactory::createReaderForFile($this->filename);
+        if ($this->reader instanceof \PHPExcel_Reader_CSV) {
             if ($csvDelimiter) {
-                $reader->setDelimiter($csvDelimiter);
+                $this->reader->setDelimiter($csvDelimiter);
             }
             if ($csvEnclosure) {
-                $reader->setEnclosure($csvEnclosure);
+                $this->reader->setEnclosure($csvEnclosure);
             }
         }
-        $phpExcel = $reader->load($fileName);
-        $worksheet = $phpExcel->getSheet(0);
+        $this->reader->setReadFilter($this->filter);
+        $worksheet = $this->reloadIterator(1);
         $this->highestDataColumn = \PHPExcel_Cell::columnIndexFromString($worksheet->getHighestDataColumn());
-        $this->rowIterator = $worksheet->getRowIterator();
         $this->rowIterator->rewind();
         $this->header = $this->convertCellIteratorToFilteredArray($this->rowIterator->current()->getCellIterator());
         $this->rowIterator->next();
@@ -76,7 +94,12 @@ class Iterator implements \Iterator
      */
     public function next()
     {
-        $this->rowIterator->next();
+        //Key è basato ad 1
+        if ($this->rowIterator->key() >= ($this->filter->getCurrentEndRow() - 1)) {
+            $this->reloadIterator($this->filter->getCurrentEndRow());
+        } else {
+            $this->rowIterator->next();
+        }
     }
 
     /**
@@ -110,6 +133,8 @@ class Iterator implements \Iterator
      */
     public function rewind()
     {
+        $this->reloadIterator(1);
+
         $this->rowIterator->rewind();
         $this->rowIterator->next();
     }
@@ -131,5 +156,21 @@ class Iterator implements \Iterator
         );
         $array = array_slice($array, 0, $this->highestDataColumn);
         return $array;
+    }
+
+    /**
+     * @param $startRowIndex
+     * @return \PHPExcel_Worksheet
+     */
+    private function reloadIterator($startRowIndex)
+    {
+        $this->filter->setRows($startRowIndex);
+        $phpExcel = $this->reader->load($this->filename);
+        $worksheet = $phpExcel->getSheet(0);
+        $this->rowIterator = $worksheet->getRowIterator();
+        $this->rowIterator->rewind();
+        $this->rowIterator->seek($startRowIndex);
+
+        return $worksheet;
     }
 }
