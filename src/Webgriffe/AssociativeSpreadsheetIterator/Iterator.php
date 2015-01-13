@@ -23,6 +23,11 @@ class Iterator implements \SeekableIterator
     protected $highestDataColumn;
 
     /**
+     * @var int
+     */
+    protected $highestRow;
+
+    /**
      * @var ChunkReadFilter
      */
     protected $filter;
@@ -53,7 +58,8 @@ class Iterator implements \SeekableIterator
         }
         $this->reader->setReadFilter($this->filter);
         $worksheet = $this->reloadIterator(1);
-        $this->highestDataColumn = \PHPExcel_Cell::columnIndexFromString($worksheet->getHighestDataColumn());
+        $this->highestDataColumn = \PHPExcel_Cell::columnIndexFromString($worksheet->getHighestDataColumn());	
+        $this->highestRow = $worksheet->getHighestRow();
         $this->rowIterator->rewind();
         $this->header = $this->convertCellIteratorToFilteredArray($this->rowIterator->current()->getCellIterator());
         $this->rowIterator->next();
@@ -192,5 +198,13 @@ class Iterator implements \SeekableIterator
         $this->rowIterator->seek($startRowIndex);
 
         return $worksheet;
+    }
+
+    /**
+     * @return int
+     */
+    public function getHighestRow()
+    {
+        return $this->highestRow;
     }
 }
