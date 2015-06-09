@@ -42,9 +42,15 @@ class Iterator implements \SeekableIterator
      */
     protected $filename;
 
-    public function __construct($fileName, $csvDelimiter = null, $csvEnclosure = null)
+    /**
+     * @var integer
+     */
+    protected $sheetNumber;
+
+    public function __construct($fileName, $csvDelimiter = null, $csvEnclosure = null, $sheetNumber = 1)
     {
         $this->filename = $fileName;
+        $this->sheetNumber = $sheetNumber;
         $this->filter = new ChunkReadFilter();
 
         $this->reader = \PHPExcel_IOFactory::createReaderForFile($this->filename);
@@ -58,10 +64,15 @@ class Iterator implements \SeekableIterator
         }
         $this->reader->setReadFilter($this->filter);
         $worksheet = $this->reloadIterator(1);
-        $this->highestDataColumn = \PHPExcel_Cell::columnIndexFromString($worksheet->getHighestDataColumn());	
+        $this->highestDataColumn = \PHPExcel_Cell::columnIndexFromString($worksheet->getHighestDataColumn());
         $this->highestRow = $worksheet->getHighestRow();
         $this->rowIterator->rewind();
         $this->header = $this->convertCellIteratorToFilteredArray($this->rowIterator->current()->getCellIterator());
+        foreach ($this->header as $headerIndex => &$columnHeader) {
+            if (is_null($columnHeader) || $columnHeader === '') {
+                $columnHeader = $headerIndex;
+            }
+        }
         $this->rowIterator->next();
     }
 
@@ -192,7 +203,7 @@ class Iterator implements \SeekableIterator
     {
         $this->filter->setRows($startRowIndex);
         $phpExcel = $this->reader->load($this->filename);
-        $worksheet = $phpExcel->getSheet(0);
+        $worksheet = $phpExcel->getSheet($this->sheetNumber - 1);
         $this->rowIterator = $worksheet->getRowIterator();
         $this->rowIterator->rewind();
         $this->rowIterator->seek($startRowIndex);
