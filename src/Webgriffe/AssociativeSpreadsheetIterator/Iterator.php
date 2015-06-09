@@ -186,8 +186,9 @@ class Iterator implements \SeekableIterator
         $array = iterator_to_array($cellIterator);
         $array = array_map(
             function ($cell) {
+                // TODO flag to indicate whether to use calculated value or plain value and test
                 /** @var \PHPExcel_Cell $cell */
-                return $cell->getValue();
+                return $cell->getCalculatedValue();
             },
             $array
         );
