@@ -47,11 +47,17 @@ class Iterator implements \SeekableIterator
      */
     protected $sheetNumber;
 
-    public function __construct($fileName, $csvDelimiter = null, $csvEnclosure = null, $sheetNumber = 1)
-    {
+    public function __construct(
+        $fileName,
+        $csvDelimiter = null,
+        $csvEnclosure = null,
+        $sheetNumber = 1,
+        $chunkSize = null
+    ) {
         $this->filename = $fileName;
         $this->sheetNumber = $sheetNumber;
-        $this->filter = new ChunkReadFilter();
+        //@todo: Dare la possibilità di disabilitare la lettura a chunk
+        $this->filter = new ChunkReadFilter(0, $chunkSize);
 
         $this->reader = \PHPExcel_IOFactory::createReaderForFile($this->filename);
         if ($this->reader instanceof \PHPExcel_Reader_CSV) {

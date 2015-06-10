@@ -10,10 +10,12 @@ namespace Webgriffe\AssociativeSpreadsheetIterator;
 
 class ChunkReadFilter implements \PHPExcel_Reader_IReadFilter
 {
+    const DEFAULT_CHUNK_SIZE = 100;
+
     private $startRow = 0;
     private $endRow = 0;
 
-    protected $defaultChunkSize = 100;
+    protected $chunkSize = self::DEFAULT_CHUNK_SIZE;
 
     public function __construct($startRow = 0, $chunkSize = null)
     {
@@ -22,27 +24,22 @@ class ChunkReadFilter implements \PHPExcel_Reader_IReadFilter
 
     public function setRows($startRow, $chunkSize = null)
     {
-        if (is_null($chunkSize)) {
-            $chunkSize = $this->defaultChunkSize;
+        if (!is_null($chunkSize)) {
+            $this->chunkSize = $chunkSize;
         }
 
         $this->startRow = $startRow;
-        $this->endRow = $startRow + $chunkSize;
+        $this->endRow = $startRow + $this->chunkSize;
     }
 
     public function getCurrentChunkSize()
     {
-        return $this->endRow - $this->startRow;
+        return $this->chunkSize;
     }
 
     public function getDefaultChunkSize()
     {
-        return $this->defaultChunkSize;
-    }
-
-    public function setDefaultChunkSize($size)
-    {
-        $this->defaultChunkSize = $size;
+        return self::DEFAULT_CHUNK_SIZE;
     }
 
     public function getCurrentStartRow()
