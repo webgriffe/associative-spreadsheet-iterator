@@ -188,7 +188,22 @@ class Iterator implements \SeekableIterator
             function ($cell) {
                 // TODO flag to indicate whether to use calculated value or plain value and test
                 /** @var \PHPExcel_Cell $cell */
-                return $cell->getCalculatedValue();
+                if ($cell->getDataType() != \PHPExcel_Cell_DataType::TYPE_FORMULA) {
+                    return $cell->getCalculatedValue();
+                }
+
+                $calculation = \PHPExcel_Calculation::getInstance(
+                    $cell->getWorksheet()->getParent()
+                );
+                $calculation->disableCalculationCache();
+                $result = $calculation->calculateCellValue($cell, true);
+
+                if (is_array($result)) {
+                    while (is_array($result)) {
+                        $result = array_pop($result);
+                    }
+                }
+                return $result;
             },
             $array
         );
