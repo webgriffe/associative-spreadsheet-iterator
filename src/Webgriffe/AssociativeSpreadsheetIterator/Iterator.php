@@ -56,7 +56,7 @@ class Iterator implements \SeekableIterator
     ) {
         $this->filename = $fileName;
         $this->sheetNumber = $sheetNumber;
-        //@todo: Dare la possibilità di disabilitare la lettura a chunk
+        //@todo: Allow disabling chunked read
         $this->filter = new ChunkReadFilter(0, $chunkSize);
 
         $this->reader = \PHPExcel_IOFactory::createReaderForFile($this->filename);
@@ -73,6 +73,7 @@ class Iterator implements \SeekableIterator
         $this->highestDataColumn = \PHPExcel_Cell::columnIndexFromString($worksheet->getHighestDataColumn());
         $this->highestRow = $worksheet->getHighestRow();
         $this->rowIterator->rewind();
+        //Don't try to limit the iterator, as we don't know the length of the header yet
         $this->header = $this->convertCellIteratorToFilteredArray($this->rowIterator->current()->getCellIterator());
         foreach ($this->header as $headerIndex => &$columnHeader) {
             if (is_null($columnHeader) || $columnHeader === '') {
@@ -95,7 +96,13 @@ class Iterator implements \SeekableIterator
             throw new \LogicException('Cannot fetch CSV row, header is not set.');
         }
 
-        $currentLine = $this->convertCellIteratorToFilteredArray($this->rowIterator->current()->getCellIterator());
+        //Limit the iterator only to interesting cells
+        $currentLine = $this->convertCellIteratorToFilteredArray(
+            $this->rowIterator->current()->getCellIterator(
+                'A',
+                \PHPExcel_Cell::stringFromColumnIndex(count($this->header) - 1)     //End index is inclusive
+            )
+        );
         if (count($currentLine) != count($this->header)) {
             throw new \LogicException(
                 sprintf(
@@ -116,7 +123,7 @@ class Iterator implements \SeekableIterator
      */
     public function next()
     {
-        //Key è basato ad 1
+        //Key is 1-based
         if ($this->rowIterator->key() >= ($this->filter->getCurrentEndRow() - 1)) {
             $this->reloadIterator($this->filter->getCurrentEndRow());
         } else {
@@ -188,7 +195,8 @@ class Iterator implements \SeekableIterator
      */
     private function convertCellIteratorToFilteredArray(\PHPExcel_Worksheet_CellIterator $cellIterator)
     {
-        $cellIterator->setIterateOnlyExistingCells(false);
+        //Remove empty cells at the end of the row
+        $cellIterator->setIterateOnlyExistingCells(true);
         $array = iterator_to_array($cellIterator);
         $array = array_map(
             function ($cell) {
@@ -213,8 +221,9 @@ class Iterator implements \SeekableIterator
             },
             $array
         );
-        $array = array_slice($array, 0, $this->highestDataColumn);
-        return $array;
+
+        //This pads with numeric keys, but these will be overwritten with the values of the header row, so it's fine
+        return array_pad(array_slice($array, 0, $this->highestDataColumn), count($this->header), null);
     }
 
     /**
