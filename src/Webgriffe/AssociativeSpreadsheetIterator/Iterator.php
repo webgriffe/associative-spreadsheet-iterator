@@ -18,11 +18,6 @@ class Iterator implements \SeekableIterator
     protected $header;
 
     /**
-     * @var int
-     */
-    protected $highestDataColumn;
-
-    /**
      * @var string
      */
     protected $highestDataColumnName;
@@ -60,7 +55,7 @@ class Iterator implements \SeekableIterator
     /**
      * @var bool
      */
-    protected $truncateLongRows;
+    protected $removeCellsNotMatchingHeaderColumns;
 
     public function __construct(
         $fileName,
@@ -68,13 +63,13 @@ class Iterator implements \SeekableIterator
         $csvEnclosure = null,
         $sheetNumber = 1,
         $chunkSize = null,
-        $fillMissingColumns = false,
-        $truncateLongRows = false
+        $fillMissingColumns = true,
+        $removeCellsNotMatchingHeaderColumns = true
     ) {
         $this->filename = $fileName;
         $this->sheetNumber = $sheetNumber;
         $this->fillMissingColumns = $fillMissingColumns;
-        $this->truncateLongRows = $truncateLongRows;
+        $this->removeCellsNotMatchingHeaderColumns = $removeCellsNotMatchingHeaderColumns;
         //@todo: Allow disabling chunked read
         $this->filter = new ChunkReadFilter(0, $chunkSize);
 
@@ -90,7 +85,6 @@ class Iterator implements \SeekableIterator
         $this->reader->setReadFilter($this->filter);
         $worksheet = $this->reloadIterator(1);
         $this->highestDataColumnName = $worksheet->getHighestDataColumn();
-        $this->highestDataColumn = \PHPExcel_Cell::columnIndexFromString($this->highestDataColumnName);
         $this->highestRow = $worksheet->getHighestRow();
         $this->rowIterator->rewind();
         $this->header = $this->getFilteredArrayForCurrentRow();
@@ -115,18 +109,34 @@ class Iterator implements \SeekableIterator
             throw new \LogicException('Cannot fetch CSV row, header is not set.');
         }
 
-        //Limit the iterator only to interesting cells
         $currentLine = $this->getFilteredArrayForCurrentRow();
-        if (count($currentLine) != count($this->header)) {
+        $headerSize = count($this->header);
+
+        if (count($currentLine) != $headerSize ||
+            count(array_intersect_key($currentLine, $this->header)) != $headerSize) {
             throw new \LogicException(
                 sprintf(
-                    'Cannot fetch CSV row, header columns count do not match. Current row is: %s',
+                    'Cannot fetch CSV row, header columns do not match rows of current row. '.
+                    'Header is: %s Current row is: %s',
+                    print_r($this->header, true),
                     print_r($currentLine, true)
                 )
             );
         }
 
-        return array_combine($this->header, $currentLine);
+        assert('count($currentLine) === count($this->header)');
+
+        //Generate che current row. Matche the header and the current row using the keys of both arrays
+        $result = array();
+        foreach ($this->header as $index => $columnHeading) {
+            if (!array_key_exists($index, $currentLine)) {
+                throw new \LogicException(
+                    sprintf('Column mismatch: header contains column key %s, while current row does not', $index)
+                );
+            }
+            $result[$columnHeading] = $currentLine[$index];
+        }
+        return $result;
     }
 
     /**
@@ -216,28 +226,19 @@ class Iterator implements \SeekableIterator
      */
     private function getFilteredArrayForCurrentRow()
     {
-        return $this->convertCellIteratorToFilteredArray(
-            $this->rowIterator->current()->getCellIterator('A', $this->highestDataColumnName)   //End index is inclusive
-        );
-    }
-
-    /**
-     * @param \PHPExcel_Worksheet_CellIterator $cellIterator
-     * @return array
-     */
-    private function convertCellIteratorToFilteredArray(\PHPExcel_Worksheet_CellIterator $cellIterator)
-    {
+        /** @var \PHPExcel_Worksheet_CellIterator $cellIterator */
+        $cellIterator = $this->rowIterator->current()->getCellIterator('A', $this->highestDataColumnName);
         $isHeaderRow = !is_array($this->header) || count($this->header) == 0;
         $array = array();
         /** @var \PHPExcel_Cell $cell */
         $cellArray = iterator_to_array($cellIterator);
-        if (!$isHeaderRow) {
+        if (!$isHeaderRow && $this->removeCellsNotMatchingHeaderColumns) {
             //Remove every cell that is not in a column mapped by the header
             $cellArray = array_intersect_key($cellArray, $this->header);
         }
         foreach ($cellArray as $key => $cell) {
-            if ($cell->getDataType() == \PHPExcel_Cell_DataType::TYPE_NULL/* && $isHeaderRow*/) {
-                //Cannot have empty values in header
+            if ($cell->getDataType() == \PHPExcel_Cell_DataType::TYPE_NULL) {
+                //Remove all empty cells. We'll add them back later if necessary
                 continue;
             }
             // TODO add a flag to indicate whether to use calculated value or plain value and test it
@@ -264,16 +265,11 @@ class Iterator implements \SeekableIterator
 
         //Should we add missing values?
         if (!$isHeaderRow && $this->fillMissingColumns) {
-            $temp = array();
             foreach ($this->header as $index => $value) {
-                if (array_key_exists($index, $array)) {
-                    $temp[$index] = $array[$index];
-                } else {
-                    $temp[$index] = null;
+                if (!array_key_exists($index, $array)) {
+                    $array[$index] = null;
                 }
             }
-
-            $array = $temp;
         }
 
         return $array;
@@ -293,8 +289,8 @@ class Iterator implements \SeekableIterator
         try {
             $this->rowIterator->seek($startRowIndex);
         } catch (\PHPExcel_Exception $ex) {
-            //Edge case: the new chunk is empty, so the seek operation fails. Set the end to -1 to make the iterator
-            //invalid
+            //Edge case: the data source ends right at the end of this chunk, so the new chunk is empty and the seek
+            //operation fails. Set the end to -1 to make the iterator invalid from now on
             $this->rowIterator->resetEnd(-1);
         }
 

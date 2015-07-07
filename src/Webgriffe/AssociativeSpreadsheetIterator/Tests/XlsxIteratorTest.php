@@ -49,7 +49,7 @@ class XlsxIteratorTest extends IteratorTestCase
     public function testIterateShouldFailDueToHeaderAndValuesDifferentColumnCount()
     {
         $filePath = __DIR__ . '/Fixtures/test-different-column-count.xlsx';
-        $worksheetIterator = new Iterator($filePath);
+        $worksheetIterator = new Iterator($filePath, null, null, 1, null, false);
 
         $this->setExpectedException('\LogicException');
         $result = array();
@@ -61,7 +61,7 @@ class XlsxIteratorTest extends IteratorTestCase
     public function testIterateShouldNotFailDueToHeaderAndValuesDifferentColumnCount()
     {
         $filePath = __DIR__ . '/Fixtures/test-different-column-count.xlsx';
-        $worksheetIterator = new Iterator($filePath, null, null, 1, null, true);
+        $worksheetIterator = new Iterator($filePath);
 
         $result = array();
         foreach ($worksheetIterator as $row) {
