@@ -55,7 +55,7 @@ class Iterator implements \SeekableIterator
     /**
      * @var bool
      */
-    protected $padShortRows;
+    protected $fillMissingColumns;
 
     /**
      * @var bool
@@ -68,12 +68,12 @@ class Iterator implements \SeekableIterator
         $csvEnclosure = null,
         $sheetNumber = 1,
         $chunkSize = null,
-        $padShortRows = false,
+        $fillMissingColumns = false,
         $truncateLongRows = false
     ) {
         $this->filename = $fileName;
         $this->sheetNumber = $sheetNumber;
-        $this->padShortRows = $padShortRows;
+        $this->fillMissingColumns = $fillMissingColumns;
         $this->truncateLongRows = $truncateLongRows;
         //@todo: Allow disabling chunked read
         $this->filter = new ChunkReadFilter(0, $chunkSize);
@@ -236,7 +236,7 @@ class Iterator implements \SeekableIterator
             $cellArray = array_intersect_key($cellArray, $this->header);
         }
         foreach ($cellArray as $key => $cell) {
-            if ($cell->getDataType() == \PHPExcel_Cell_DataType::TYPE_NULL && $isHeaderRow) {
+            if ($cell->getDataType() == \PHPExcel_Cell_DataType::TYPE_NULL/* && $isHeaderRow*/) {
                 //Cannot have empty values in header
                 continue;
             }
@@ -260,6 +260,20 @@ class Iterator implements \SeekableIterator
                 }
             }
             $array[$key] = $result;
+        }
+
+        //Should we add missing values?
+        if (!$isHeaderRow && $this->fillMissingColumns) {
+            $temp = array();
+            foreach ($this->header as $index => $value) {
+                if (array_key_exists($index, $array)) {
+                    $temp[$index] = $array[$index];
+                } else {
+                    $temp[$index] = null;
+                }
+            }
+
+            $array = $temp;
         }
 
         return $array;

@@ -5,7 +5,6 @@
 
 namespace Webgriffe\AssociativeSpreadsheetIterator\Tests;
 
-
 use Webgriffe\AssociativeSpreadsheetIterator\Iterator;
 
 class XlsxIteratorTest extends IteratorTestCase
@@ -49,8 +48,6 @@ class XlsxIteratorTest extends IteratorTestCase
 
     public function testIterateShouldFailDueToHeaderAndValuesDifferentColumnCount()
     {
-        $this->markTestSkipped();
-
         $filePath = __DIR__ . '/Fixtures/test-different-column-count.xlsx';
         $worksheetIterator = new Iterator($filePath);
 
@@ -64,7 +61,7 @@ class XlsxIteratorTest extends IteratorTestCase
     public function testIterateShouldNotFailDueToHeaderAndValuesDifferentColumnCount()
     {
         $filePath = __DIR__ . '/Fixtures/test-different-column-count.xlsx';
-        $worksheetIterator = new Iterator($filePath);
+        $worksheetIterator = new Iterator($filePath, null, null, 1, null, true);
 
         $result = array();
         foreach ($worksheetIterator as $row) {
@@ -95,4 +92,4 @@ class XlsxIteratorTest extends IteratorTestCase
         $emptyIterator = new Iterator($filePath);
         $this->assertEmptyIteratorIsNotValidAndIteratesOnEmptyArray($emptyIterator);
     }
-} 
+}
