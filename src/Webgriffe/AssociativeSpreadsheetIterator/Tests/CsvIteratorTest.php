@@ -52,6 +52,24 @@ CSV;
         );
     }
 
+    public function testIterateShouldFailDueToHeaderAndValuesDifferentColumnCount()
+    {
+        $this->markTestSkipped();
+
+        $csvContent = <<<CSV
+"column1","column2","column3"
+"there are","fewer columns than header"
+CSV;
+        $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
+        $worksheetIterator = new Iterator($filePath);
+
+        $this->setExpectedException('\LogicException');
+        $result = array();
+        foreach ($worksheetIterator as $row) {
+            $result[] = $row;
+        }
+    }
+
     public function testIterateShouldNotFailDueToHeaderAndValuesDifferentColumnCount()
     {
         $csvContent = <<<CSV
@@ -71,6 +89,74 @@ CSV;
                     'column1' => 'there are',
                     'column2' => 'fewer columns than header',
                     'column3' => null,
+                ),
+            ),
+            $result
+        );
+    }
+
+    public function testIterateShouldFailDueToTooLongValues()
+    {
+        $this->markTestSkipped();
+
+        $csvContent = <<<CSV
+"column1","column2","column3"
+"there are","more","columns","than header"
+CSV;
+        $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
+        $worksheetIterator = new Iterator($filePath);
+
+        $this->setExpectedException('\LogicException');
+        $result = array();
+        foreach ($worksheetIterator as $row) {
+            $result[] = $row;
+        }
+    }
+
+    public function testIterateShouldNotFailDueToTooLongValues()
+    {
+        $csvContent = <<<CSV
+"column1","column2","column3"
+"there are","more","columns","than header"
+CSV;
+        $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
+        $worksheetIterator = new Iterator($filePath);
+
+        $result = array();
+        foreach ($worksheetIterator as $row) {
+            $result[] = $row;
+        }
+        $this->assertEquals(
+            array(
+                array(
+                    'column1' => 'there are',
+                    'column2' => 'more',
+                    'column3' => 'columns',
+                ),
+            ),
+            $result
+        );
+    }
+
+    public function testIterateShouldNotFailDueToEmptyCells()
+    {
+        $csvContent = <<<CSV
+"column1","column2","column3"
+"one",,"three"
+CSV;
+        $filePath = $this->setUpVirtualFileAndGetPath($csvContent);
+        $worksheetIterator = new Iterator($filePath);
+
+        $result = array();
+        foreach ($worksheetIterator as $row) {
+            $result[] = $row;
+        }
+        $this->assertEquals(
+            array(
+                array(
+                    'column1' => 'one',
+                    'column2' => null,
+                    'column3' => 'three',
                 ),
             ),
             $result
@@ -159,11 +245,13 @@ CSV;
         $csvIterator->rewind();
 
         $csvIterator->seek($jumpTo);
+        $this->assertTrue($csvIterator->valid());
         $this->assertEquals(array('col1' => "val1-$jumpTo", 'col2' => "val2-$jumpTo"), $csvIterator->current());
         $this->assertEquals($jumpTo, $csvIterator->key());
         $csvIterator->next();
         if ($moreValidElements) {
             $next = $jumpTo+1;
+            $this->assertTrue($csvIterator->valid());
             $this->assertEquals(array('col1' => "val1-$next", 'col2' => "val2-$next"), $csvIterator->current());
             $this->assertEquals($next, $csvIterator->key());
             return;
@@ -171,6 +259,7 @@ CSV;
 
         $this->assertFalse($csvIterator->valid());
         $csvIterator->rewind();
+        $this->assertTrue($csvIterator->valid());
         $this->assertEquals(array('col1' => "val1-1", 'col2' => "val2-1"), $csvIterator->current());
         $this->assertEquals(1, $csvIterator->key());
     }

@@ -50,13 +50,13 @@ class IteratorTestCase extends \PHPUnit_Framework_TestCase
         $this->assertEquals(array(), $result);
     }
 
-    protected function testMultipleSheet()
+    public function testMultipleSheet()
     {
         // TODO testMultipleSheet
         $this->markTestIncomplete();
     }
 
-    protected function testHeadersNameWhenHeaderNotPresent()
+    public function testHeadersNameWhenHeaderNotPresent()
     {
         // TODO testHeadersNameWhenHeaderNotPresent
         $this->markTestIncomplete();
