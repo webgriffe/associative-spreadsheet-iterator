@@ -91,6 +91,8 @@ class Iterator implements \SeekableIterator
         foreach ($this->header as $headerIndex => &$columnHeader) {
             if (is_null($columnHeader) || $columnHeader === '') {
                 $columnHeader = $headerIndex;
+            } else {
+                $columnHeader = trim($columnHeader);
             }
         }
         $this->rowIterator->next();
